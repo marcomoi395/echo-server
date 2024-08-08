@@ -82,24 +82,23 @@ const handleAddItem = async (req, res) => {
 
 const handleDeleteItem = async (req, res) => {
     const userId = req.userId;
-    const { id } = req.body;
+    const {id} = req.body;
 
     try {
-        const result = await BudgetTracker.updateOne(
-            { _id: id, userId: userId },
-            { deleted: true, deleteAt: Date.now() }
-        );
+        const result = await BudgetTracker.updateOne({_id: id, deleted: false, userId: userId}, {
+            deleted: true,
+            deleteAt: Date.now()
+        });
 
-        if (result.nModified === 0) {
-            res.status(404).json({ error: 'Item not found or already deleted' });
+        if (result.modifiedCount === 0) {
+            res.status(404).json({error: 'Item not found or already deleted'});
         } else {
-            res.status(200).json({ message: 'Item deleted successfully' });
+            res.status(200).json({message: 'Item deleted successfully'});
         }
     } catch (e) {
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({error: 'Internal server error'});
     }
 };
-
 
 
 module.exports = {handleGetItems, handleAddItem, handleDeleteItem}
