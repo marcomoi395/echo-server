@@ -1,11 +1,16 @@
 const mongoose = require("mongoose");
 
 const budgetTracker = new mongoose.Schema({
-    userId: String, description: String, amount: Number, type: String, date: {
-        type: Date, default: Date.now,
-    }, deleted: {
-        type: Boolean, default: false,
-    }, deletedAt: Date
+    userId: String,
+    description: String,
+    amount: Number,
+    type: String,
+    date: Date,
+    deleted: {
+        type: Boolean,
+        default: false,
+    },
+    deletedAt: Date
 }, {
     timestamps: true,
 },);

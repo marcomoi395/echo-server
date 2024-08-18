@@ -1,11 +1,12 @@
 const BudgetTracker = require('../models/budgetTracker.model');
+const {response} = require("express");
 require('dotenv').config();
 
 // GET /
 const handleGetItems = async (req, res) => {
     const userId = req.userId;
-    const {type, time} = req.query;
-
+    const {time, page, pageSize, type} = req.query;
+    const sort = JSON.parse(req.query.sort)
     let find = {
         userId: userId, deleted: false
     };
@@ -21,7 +22,6 @@ const handleGetItems = async (req, res) => {
         if (time === 'today') {
             startDate = new Date(now.setHours(0, 0, 0, 0));
             endDate = new Date(now.setHours(23, 59, 59, 999));
-            console.log(startDate, endDate)
         } else if (time === 'weekly') {
             const day = now.getDay();
             const diff = (day === 0 ? -6 : 1) - day;
@@ -43,8 +43,27 @@ const handleGetItems = async (req, res) => {
     }
 
     try {
-        const records = await BudgetTracker.find(find).exec();
-        res.json(records);
+        const result = await BudgetTracker
+            .find(find)
+            .skip((page - 1) * pageSize)
+            .limit(pageSize)
+            .sort({
+                [sort.key.toLowerCase()]: sort.value
+            }).exec();
+
+        // Truy vấn tổng số lượng item
+        const {type, ...newFind} = find
+        const totalItems = await BudgetTracker.find(newFind).countDocuments();
+
+        // Truy vấn tổng số lượng item
+        const totalIncomeItems = await BudgetTracker.find({...find, type: "income"}).countDocuments();
+
+        // Tính toán tổng số trang
+        const totalPages = Math.ceil(totalItems / pageSize);
+
+        res.json({
+            result, totalItems, totalPages, currentPage: page, totalIncomeItems
+        });
     } catch (err) {
         res.status(500).json({error: 'Internal server error'});
     }
@@ -59,12 +78,13 @@ const handleAddItem = async (req, res) => {
     {
         "description": "Com trua",
         "amount": 20000,
-        "type": "expense"
+        "type": "expense",
+        "date": '2024-08-14T17:00:00.000Z',
     }
     */
 
     // Kiểm tra xem các trường bắt buộc có tồn tại và hợp lệ hay không
-    if (!data.description || !data.amount || !data.type) {
+    if (!data.description || !data.amount || !data.type || !data.date) {
         return res.status(400).json({error: 'Request complete information.'});
     }
 
@@ -80,17 +100,15 @@ const handleAddItem = async (req, res) => {
     }
 }
 
+// DELETE budget-tracker/delete
 const handleDeleteItem = async (req, res) => {
     const userId = req.userId;
-    const {id} = req.body;
+    const {idList} = req.body;
 
     try {
-        const result = await BudgetTracker.updateOne({_id: id, deleted: false, userId: userId}, {
-            deleted: true,
-            deleteAt: Date.now()
-        });
+        const result = await BudgetTracker.deleteMany({ _id: { $in: idList } })
 
-        if (result.modifiedCount === 0) {
+        if (result?.deletedCount === 0) {
             res.status(404).json({error: 'Item not found or already deleted'});
         } else {
             res.status(200).json({message: 'Item deleted successfully'});

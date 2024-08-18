@@ -6,7 +6,7 @@ router.get('/', handleGetItems)
 
 router.post('/add', handleAddItem)
 
-router.patch('/delete', handleDeleteItem);
+router.delete('/delete', handleDeleteItem);
 
 module.exports = router;
 
