@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        idAccountTelegram: String,
         refreshToken: {
             type: [String],
             default: [],

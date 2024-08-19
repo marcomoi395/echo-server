@@ -5,8 +5,15 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser')
 const routes = require("./routes");
 const cors = require("cors");
+const bot = require("./services/TelegramBot/index")
 
 database.connect();
+
+// TelegramBot
+bot.launch();
+// Enable graceful stop
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
 const app = express();
 const port = process.env.PORT;
