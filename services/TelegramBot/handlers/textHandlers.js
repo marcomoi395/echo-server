@@ -1,7 +1,6 @@
 const keyboard = require("../utils/keyboards");
 const regex = require("../utils/regex");
 require("dotenv").config();
-// const ExpenseAndIncome = require("../models/expenseAndIncome.model");
 const Markup = require("telegraf/markup");
 const callbackHandlers = require("../action");
 const formSendUser = require("../utils/formSendUser");
@@ -9,10 +8,6 @@ const BudgetTracker = require("../../../models/budgetTracker.model");
 const User = require("../../../models/user.model");
 const {transactionHandler} = require("./transactionHandler");
 const {deleteMessageUtil} = require("../utils/deleteMessage.util");
-
-// const expenseAndIncomeService = require("../services/expenseAndIncome.service");
-// const addConfessionService = require("../services/addConfession.service");
-// const getConfessionService = require("../services/getConfession.service");
 
 // Send Message
 module.exports.message = async (ctx) => {
@@ -79,43 +74,36 @@ module.exports.getAmountIncomeByTime = async (ctx) => {
     }
 };
 
-// module.exports.sendLatestRequest = async (ctx) => {
-//     try {
-//         const record = await ExpenseAndIncome.findOne({
-//             userId: config.userId,
-//         });
-//
-//         const uniqueValues = [...new Set(record.chat)].slice(0, 3);
-//
-//         let buttons = [];
-//         uniqueValues.forEach((chat) => {
-//             buttons.push([Markup.button.callback(chat, `sendMessage:${chat}`)]);
-//         });
-//
-//         const timeSelectionIncomeKeyboard = Markup.inlineKeyboard(buttons);
-//
-//         const sentMessage = await ctx.reply(
-//             "📋 Dưới đây là một vài ghi chú gần nhất:",
-//             timeSelectionIncomeKeyboard,
-//         );
-//
-//         // Xóa keyboard sau 20s không hoạt động
-//         setTimeout(async () => {
-//             try {
-//                 await ctx.deleteMessage(sentMessage.message_id);
-//             } catch (error) {}
-//         }, 20000);
-//
-//         // Xóa tin nhắn của người dùng
-//         await ctx.deleteMessage(ctx.message.message_id);
-//
-//         await callbackHandlers.addExpenseAndIncomeLog(ctx);
-//     } catch (e) {
-//         ctx.reply(
-//             "⚠️ Xin lỗi, đã xảy ra lỗi khi tải các ghi chú gần nhất. Vui lòng thử lại sau. 🥹",
-//         );
-//     }
-// };
+module.exports.sendLatestRequest = async (ctx) => {
+    try {
+        const userId = ctx.session.userId;
+        const find = {
+            userId: userId, deleted: false
+        };
+
+        const records = await BudgetTracker.find(find).sort({ createdAt: -1 });
+
+        const uniqueValues = [...new Set(records.map(record => `${record.description} ${record.amount}`))].slice(0, 3);
+
+        let buttons = [];
+        uniqueValues.forEach((chat) => {
+            buttons.push([Markup.button.callback(chat, `sendMessage:${chat}`)]);
+        });
+
+        const timeSelectionIncomeKeyboard = Markup.inlineKeyboard(buttons);
+
+        const sentMessage = await ctx.reply(
+            "📋 Dưới đây là một vài ghi chú gần nhất:",
+            timeSelectionIncomeKeyboard,
+        );
+
+        await deleteMessageUtil(ctx, ctx.message.message_id, sentMessage.message_id, 20000)
+    } catch (e) {
+        ctx.reply(
+            "⚠️ Xin lỗi, đã xảy ra lỗi khi tải các ghi chú gần nhất. Vui lòng thử lại sau. 🥹",
+        );
+    }
+};
 //
 // module.exports.addConfession = async (ctx) => {
 //     const sentMessage = await ctx.reply(

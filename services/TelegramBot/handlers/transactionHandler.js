@@ -35,10 +35,8 @@ const transactionHandler = async (message, ctx) => {
                 parse_mode: "HTML",
             });
 
-            // console.log(ctx, ctx.message.message_id, sentMessage.message_id)
-
             // Delete Message
-            await deleteMessageUtil(ctx, ctx.message.message_id, sentMessage.message_id)
+            await deleteMessageUtil(ctx, ctx?.message?.message_id, sentMessage?.message_id)
         } catch (error) {
             console.log(error)
             ctx.reply("Lỗi rồi trời ơi, báo lại với Thanh Loi ngay đi 😤😤😤");
@@ -67,8 +65,9 @@ const transactionHandler = async (message, ctx) => {
             });
 
             // Delete Message
-            await deleteMessageUtil(ctx, ctx.message.message_id, sentMessage.message_id)
+            await deleteMessageUtil(ctx, ctx?.message?.message_id, sentMessage?.message_id)
         } catch (error) {
+            console.log(error)
             ctx.reply("Lỗi rồi trời ơi, báo lại với Thanh Loi ngay đi 😤😤😤");
         }
     }

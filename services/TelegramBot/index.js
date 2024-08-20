@@ -20,8 +20,7 @@ bot.start((ctx) => {
 // Command
 bot.command("ae", middleware.auth, textHandlers.getAmountExpenseByTime);
 bot.command("ai", middleware.auth, textHandlers.getAmountIncomeByTime);
-//
-// bot.command("recommend", middleware.auth, textHandlers.sendLatestRequest);
+bot.command("recommend", middleware.auth, textHandlers.sendLatestRequest);
 //
 // bot.command("confession", middleware.auth, textHandlers.addConfession);
 //
@@ -36,5 +35,6 @@ bot.on(
 
 
 bot.action(/amount:(.+)/, action.getAmount);
+bot.action(/sendMessage:(.+)/, action.addExpenseAndIncomeLog);
 
 module.exports = bot;

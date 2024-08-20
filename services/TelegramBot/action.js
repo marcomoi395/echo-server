@@ -3,17 +3,19 @@
 // const formatDataExpenseAndIncome = require("../utils/formatDataExpenseAndIncome");
 // const expenseAndIncomeMessagesLogs = require("../services/expenseAndIncomeMessagesLogs");
 // const config = require("../config/process.env");
+const regex = require("./utils/regex");
 const formSendUser = require("./utils/formSendUser");
 const getTimeUntilEndOfDay = require('./utils/getTimeUntilEndOfDay');
 const bot = require('./index')
 const getAmountHandler = require("./handlers/getAmountHandler");
+const {transactionHandler} = require("./handlers/transactionHandler");
 
 module.exports.getAmount = async (ctx) => {
     const match = ctx.callbackQuery.data.match(/amount:(.+)/);
     if (match) {
         const message = match[1].split(',');
         const amount = await getAmountHandler(ctx, message);
-        if(amount === null){
+        if (amount === null) {
             await ctx.reply(`Lỗi rồi trời ơi, báo lại với Thanh Loi ngay đi 😤😤😤`);
         }
         let sentMessage;
@@ -41,69 +43,17 @@ module.exports.getAmount = async (ctx) => {
                 console.log(error)
             }
         }, 10000);
-
-        // await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
     }
 };
-//
-// module.exports.addExpenseAndIncomeLog = async (ctx) => {
-//     bot.action(/sendMessage:(.+)/, async (ctx) => {
-//         const match = ctx.callbackQuery.data.match(/sendMessage:(.+)/);
-//         if (match) {
-//             const message = match[1];
-//             try {
-//                 if (regex.checkRegexExpense(message))
-//                     if (message.startsWith('t')) {
-//                         const messageFormat = message.slice(2).match(/^(.+?)\s(\d+)\s*(.+)?$/);
-//                         if (formatDataExpenseAndIncome(messageFormat, 'Income')) {
-//                             const sentMessage = await expenseAndIncomeMessagesLogs(message, config.userId);
-//                             ctx.reply(formSendUser.recordedSuccessfully(message), {
-//                                 parse_mode: "HTML"
-//                             });
-//
-//                             // Xóa tin nhắn của bot vào cuối ngày
-//                             setTimeout(async () => {
-//                                 try {
-//                                     await ctx.deleteMessage(sentMessage.message_id);
-//                                 } catch (error) {
-//                                 }
-//                             }, getTimeUntilEndOfDay());
-//
-//                         } else {
-//                             ctx.reply("Error");
-//                         }
-//                     } else {
-//                         const messageFormat = message.match(/^(.+?)\s(\d+)\s*(.+)?$/);
-//                         if (formatDataExpenseAndIncome(messageFormat, 'Expense')) {
-//                             await expenseAndIncomeMessagesLogs(message, config.userId);
-//                             const sentMessage = await ctx.reply(formSendUser.recordedSuccessfully(message), {
-//                                 parse_mode: "HTML"
-//                             });
-//
-//                             // Xóa tin nhắn của bot vào cuối ngày
-//                             setTimeout(async () => {
-//                                 try {
-//                                     await ctx.deleteMessage(sentMessage.message_id);
-//                                 } catch (error) {
-//                                 }
-//                             }, getTimeUntilEndOfDay());
-//
-//                         } else {
-//                             ctx.reply("Error");
-//                         }
-//                     }
-//                 else {
-//                     ctx.reply("hahaha");
-//                 }
-//             } catch (e) {
-//                 ctx.reply('Errorrrr');
-//
-//             }
-//         } else {
-//             ctx.answerCbQuery('Định dạng callback query không hợp lệ');
-//         }
-//
-//         await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
-//     });
-//
-// };
+
+module.exports.addExpenseAndIncomeLog = async (ctx) => {
+    const match = ctx.callbackQuery.data.match(/sendMessage:(.+)/);
+    if (match) {
+        const message = match[1];
+        if (regex.checkRegexExpense(message)) {
+            await transactionHandler(message, ctx);
+        }
+    } else {
+        ctx.answerCbQuery('Định dạng callback query không hợp lệ');
+    }
+};

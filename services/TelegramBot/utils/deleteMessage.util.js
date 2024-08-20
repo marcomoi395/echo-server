@@ -5,16 +5,20 @@ function getTimeUntilEndOfDay() {
 }
 
 const deleteMessageUtil = async (ctx, userMessageId, sentMessageId, time = getTimeUntilEndOfDay()) => {
-    // Xóa tin nhắn của người dùng
-    await ctx.deleteMessage(userMessageId);
+    if(userMessageId) {
+        // Xóa tin nhắn của người dùng
+        await ctx.deleteMessage(userMessageId);
+    }
 
-    // Xóa tin nhắn của bot vào cuối ngày
-    setTimeout(async () => {
-        try {
-            await ctx.deleteMessage(sentMessageId);
-        } catch (error) {
-        }
-    }, time);
+    if(sentMessageId) {
+        // Xóa tin nhắn của bot vào cuối ngày
+        setTimeout(async () => {
+            try {
+                await ctx.deleteMessage(sentMessageId);
+            } catch (error) {
+            }
+        }, time);
+    }
 }
 
 module.exports = {deleteMessageUtil}
