@@ -3,14 +3,13 @@ require("dotenv").config();
 const textHandlers = require("./handlers/textHandlers");
 const middleware = require("./auth.middleware");
 const action = require('./action');
-// const scheduleDailyMessage = require("./services/scheduleDailyMessage");
-
+const scheduleDailyMessage = require("./handlers/scheduleDailyMessageHandler");
 
 const bot = new Telegraf.Telegraf(process.env.TOKEN);
 bot.use(Telegraf.session());
 
 // Schedule Daily Message
-// scheduleDailyMessage(bot);
+scheduleDailyMessage(bot);
 
 bot.start((ctx) => {
     // Khởi tạo biến session cho người dùng
@@ -21,10 +20,8 @@ bot.start((ctx) => {
 bot.command("ae", middleware.auth, textHandlers.getAmountExpenseByTime);
 bot.command("ai", middleware.auth, textHandlers.getAmountIncomeByTime);
 bot.command("recommend", middleware.auth, textHandlers.sendLatestRequest);
-//
-// bot.command("confession", middleware.auth, textHandlers.addConfession);
-//
-// bot.command("get_confession", middleware.auth, textHandlers.getConfession);
+bot.command("confession", middleware.auth, textHandlers.addConfession);
+bot.command("get_confession", middleware.auth, textHandlers.getConfession);
 
 // Handler;
 bot.on(
@@ -32,7 +29,6 @@ bot.on(
     middleware.auth,
     textHandlers.message
 );
-
 
 bot.action(/amount:(.+)/, action.getAmount);
 bot.action(/sendMessage:(.+)/, action.addExpenseAndIncomeLog);

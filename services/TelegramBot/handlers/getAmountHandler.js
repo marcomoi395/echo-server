@@ -5,7 +5,6 @@ const getAmountHandler = async (ctx, message) => {
     const type = message[0];
     const time = message[1];
     const userId = String(ctx.session?.userId);
-    console.log(time, type, userId)
     if(!time || !type || !userId) return null;
 
     let find = {

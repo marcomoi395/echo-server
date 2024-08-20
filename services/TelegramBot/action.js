@@ -1,12 +1,4 @@
-// const notion = require('../services/notionService');
-// const regex = require("../utils/regex");
-// const formatDataExpenseAndIncome = require("../utils/formatDataExpenseAndIncome");
-// const expenseAndIncomeMessagesLogs = require("../services/expenseAndIncomeMessagesLogs");
-// const config = require("../config/process.env");
 const regex = require("./utils/regex");
-const formSendUser = require("./utils/formSendUser");
-const getTimeUntilEndOfDay = require('./utils/getTimeUntilEndOfDay');
-const bot = require('./index')
 const getAmountHandler = require("./handlers/getAmountHandler");
 const {transactionHandler} = require("./handlers/transactionHandler");
 
