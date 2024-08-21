@@ -6,7 +6,7 @@ router.post('/login', handleLogin)
 
 router.post('/register', handleRegister);
 
-router.get('/logout', handleLogout)
+router.post('/logout', handleLogout)
 
 router.post('/refresh', handleRefresh)
 

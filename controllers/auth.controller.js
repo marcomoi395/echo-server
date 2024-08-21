@@ -26,7 +26,7 @@ const handleLogin = async (req, res) => {
         if (!isVerify) {
             return res.status(401).json({error: 'Incorrect password'});
         } else {
-            const accessToken = jwt.sign({id: foundUser._id}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
+            const accessToken = jwt.sign({id: foundUser._id}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1m'});
 
             let refreshToken = jwt.sign({id: foundUser._id}, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '30d'});
 
@@ -73,6 +73,7 @@ const handleRegister = async (req, res) => {
     }
 }
 
+// POST auth/logout
 const handleLogout = async (req, res) => {
     try {
         const cookies = req.cookies;
@@ -99,6 +100,7 @@ const handleLogout = async (req, res) => {
 }
 
 const handleRefresh = async (req, res) => {
+    console.log('refresh')
     const cookies = req.cookies;
     if (!cookies?.refreshToken) return res.sendStatus(401);
     const refreshToken = cookies.refreshToken;
@@ -142,7 +144,6 @@ const handleRefresh = async (req, res) => {
 
         res.json({accessToken})
     })
-
 }
 
 module.exports = {handleLogin, handleRegister, handleLogout, handleRefresh}
