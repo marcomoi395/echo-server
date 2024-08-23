@@ -6,7 +6,14 @@ require('dotenv').config();
 const handleGetItems = async (req, res) => {
     const userId = req.userId;
     const {time, page, pageSize, type} = req.query;
-    const sort = JSON.parse(req.query.sort)
+    let sort;
+    if(req.query?.sort){
+        sort = JSON.parse(req.query?.sort);
+    }
+    else{
+        sort = {key: 'date', value: -1};
+    }
+
     let find = {
         userId: userId, deleted: false
     };
@@ -64,7 +71,8 @@ const handleGetItems = async (req, res) => {
         res.json({
             result, totalItems, totalPages, currentPage: page, totalIncomeItems
         });
-    } catch (err) {
+    } catch (error) {
+        console.log(error)
         res.status(500).json({error: 'Internal server error'});
     }
 };
@@ -96,6 +104,7 @@ const handleAddItem = async (req, res) => {
         await newRecord.save();
         res.status(201).json(newRecord);
     } catch (error) {
+        console.log(error)
         res.status(500).json({error: 'An error occurred while saving the record.'});
     }
 }
@@ -114,6 +123,7 @@ const handleDeleteItem = async (req, res) => {
             res.status(200).json({message: 'Item deleted successfully'});
         }
     } catch (e) {
+        console.log(error)
         res.status(500).json({error: 'Internal server error'});
     }
 };

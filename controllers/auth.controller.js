@@ -10,7 +10,8 @@ const handleLogin = async (req, res) => {
             return res.status(400).json({ error: 'You are already logged in.' });
         }
 
-        const {email, password} = req.body;
+        const {email, password, isRememberMe} = req.body;
+
         if (!email || !password) return res.status(400).send({error: 'Email and password are required.'})
 
         const foundUser = await User.findOne({
@@ -26,9 +27,9 @@ const handleLogin = async (req, res) => {
         if (!isVerify) {
             return res.status(401).json({error: 'Incorrect password'});
         } else {
-            const accessToken = jwt.sign({id: foundUser._id}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1m'});
+            const accessToken = jwt.sign({id: foundUser._id}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '15m'});
 
-            let refreshToken = jwt.sign({id: foundUser._id}, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '30d'});
+            let refreshToken = jwt.sign({id: foundUser._id, rememberMe: isRememberMe}, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '15d'});
 
             // Saving refreshToken with current user
             foundUser.refreshToken.push(refreshToken);
@@ -37,9 +38,16 @@ const handleLogin = async (req, res) => {
             const refreshTokenExpiry = 30 * 24 * 60 * 60 * 1000;
 
             // Creates Secure Cookie with refresh token
-            res.cookie('refreshToken', refreshToken, {
-                httpOnly: true, secure: true, sameSite: 'None', maxAge: refreshTokenExpiry
-            });
+            if(!isRememberMe){
+                res.cookie('refreshToken', refreshToken, {
+                    httpOnly: true, secure: true, sameSite: 'None'
+                });
+            }
+            else{
+                res.cookie('refreshToken', refreshToken, {
+                    httpOnly: true, secure: true, sameSite: 'None', maxAge: refreshTokenExpiry
+                });
+            }
 
             // Send authorization roles and access token to user
             res.json({accessToken});
@@ -100,50 +108,68 @@ const handleLogout = async (req, res) => {
 }
 
 const handleRefresh = async (req, res) => {
-    console.log('refresh')
     const cookies = req.cookies;
     if (!cookies?.refreshToken) return res.sendStatus(401);
+
     const refreshToken = cookies.refreshToken;
     res.clearCookie('refreshToken', {httpOnly: true, sameSite: 'None', secure: true});
 
-    const foundUser = await User.findOne({refreshToken: refreshToken}).select('-password').exec();
+    try{
+        const foundUser = await User.findOne({refreshToken: refreshToken}).select('-password').exec();
 
-    if (!foundUser) {
-        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decode) => {
-            if (err) {
-                return res.sendStatus(403)
-            }
+        if (!foundUser) {
+            jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decode) => {
+                if (err) {
+                    return res.sendStatus(403)
+                }
 
-            const hackedUser = await User.updateOne({_id: decode.id}, {refreshToken: []}).exec();
-        })
-        return res.sendStatus(403);
-    }
-
-    const newRefreshTokenArray = foundUser?.refreshToken.filter(rt => rt !== refreshToken);
-
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decode) => {
-        if (err) {
-            await User.findOneAndUpdate(
-                { _id: foundUser._id },
-                { refreshToken: newRefreshTokenArray }
-            ).exec();
-            return res.sendStatus(403);
+                await User.updateOne({_id: decode.id}, {refreshToken: []}).exec();
+                return res.sendStatus(403);
+            })
         }
+        else{
+            const newRefreshTokenArray = foundUser?.refreshToken.filter(rt => rt !== refreshToken);
 
+            jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decode) => {
+                if (err) {
+                    await User.findOneAndUpdate(
+                        { _id: foundUser._id },
+                        { refreshToken: newRefreshTokenArray }
+                    ).exec();
+                    return res.sendStatus(403);
+                }
 
-        const accessToken = jwt.sign({id: foundUser._id}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1m'});
-        const newRefreshToken = jwt.sign({id: foundUser._id}, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '30d'})
+                const accessToken = jwt.sign({id: foundUser._id}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '15m'});
+                const newRefreshToken = jwt.sign({id: foundUser._id, rememberMe: decode.rememberMe}, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '30d'})
 
-        const refreshTokenArray = [...newRefreshTokenArray, newRefreshToken];
-        await User.updateOne(
-            { _id: foundUser._id },
-            { refreshToken: refreshTokenArray }
-        ).exec();
+                const refreshTokenArray = [...newRefreshTokenArray, newRefreshToken];
+                await User.updateOne(
+                    { _id: foundUser._id },
+                    { refreshToken: refreshTokenArray }
+                ).exec();
 
-        res.cookie('refreshToken', newRefreshToken, {httpOnly: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000 * 30});
+                const refreshTokenExpiry = 30 * 24 * 60 * 60 * 1000;
 
-        res.json({accessToken})
-    })
+                // Creates Secure Cookie with refresh token
+                if(!decode.rememberMe){
+                    res.cookie('refreshToken', newRefreshToken, {
+                        httpOnly: true, secure: true, sameSite: 'None'
+                    });
+                }
+                else{
+                    res.cookie('refreshToken', newRefreshToken, {
+                        httpOnly: true, secure: true, sameSite: 'None', maxAge: refreshTokenExpiry
+                    });
+                }
+
+                res.json({accessToken})
+            })
+        }
+    }
+    catch (e){
+        console.error('Lỗi xử lý refresh token:', e);
+        res.sendStatus(500); // Lỗi máy chủ nội bộ
+    }
 }
 
 module.exports = {handleLogin, handleRegister, handleLogout, handleRefresh}
