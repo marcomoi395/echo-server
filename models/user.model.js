@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
             default: true,
         },
         idAccountTelegram: String,
+        confessionPassword: String,
         refreshToken: {
             type: [String],
             default: [],
