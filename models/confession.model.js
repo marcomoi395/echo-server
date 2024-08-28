@@ -3,18 +3,17 @@ const mongoose = require("mongoose");
 const confessionSchema = new mongoose.Schema(
     {
         userId: String,
-        password: String,
         data: [
             {
                 date: {
                     type: Date,
                     default: Date.now()
                 },
-                title: String,
-                content: {
+                title: {
                     type: String,
-                    required: true
+                    required: true,
                 },
+                content: String,
             }
         ]
     },

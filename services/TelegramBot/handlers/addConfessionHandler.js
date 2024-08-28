@@ -4,12 +4,6 @@ const responseConfessionMessage = require("../utils/responseConfessionMessage");
 const addConfessionHandler = async (ctx, message) => {
     const userId = ctx.session.userId;
 
-    const isExist = await Confession.findOne({userId: userId}).exec();
-
-    if (!isExist) {
-        const newConfession = new Confession({userId: userId});
-        await newConfession.save();
-    }
     const messageFormat = message.split("\n");
 
     if (messageFormat.length > 1) {
@@ -24,6 +18,7 @@ const addConfessionHandler = async (ctx, message) => {
                     data: data,
                 },
             },
+            { upsert: true }
         );
     } else {
         await Confession.updateOne(
@@ -31,10 +26,11 @@ const addConfessionHandler = async (ctx, message) => {
             {
                 $push: {
                     data: {
-                        content: messageFormat[0],
+                        title: messageFormat[0],
                     },
                 },
             },
+            { upsert: true }
         );
     }
 

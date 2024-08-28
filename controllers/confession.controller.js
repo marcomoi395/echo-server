@@ -64,36 +64,40 @@ const handleCreatePasswordConfession = async (req, res) => {
 }
 
 // POST /add
-// const handleAddItem = async (req, res) => {
-//     const userId = req.userId
-//     const data = req.body;
-//
-//     /* Example input
-//     {
-//         "description": "Com trua",
-//         "amount": 20000,
-//         "type": "expense",
-//         "date": '2024-08-14T17:00:00.000Z',
-//     }
-//     */
-//
-//     // Kiểm tra xem các trường bắt buộc có tồn tại và hợp lệ hay không
-//     if (!data.description || !data.amount || !data.type || !data.date) {
-//         return res.status(400).json({error: 'Request complete information.'});
-//     }
-//
-//     data.amount = Number(data.amount)
-//     data.userId = userId;
-//
-//     try {
-//         const newRecord = new BudgetTracker(data);
-//         await newRecord.save();
-//         res.status(201).json(newRecord);
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).json({error: 'An error occurred while saving the record.'});
-//     }
-// }
+const handleAddItem = async (req, res) => {
+    const userId = req.userId
+    const data = req.body;
+
+    /* Example input
+    {
+        "date": "2024-08-14T17:00:00.000Z",
+        "title": "Tuyet voi",
+        "content": "Haahahaha",
+    }
+    */
+
+    // Kiểm tra xem các trường bắt buộc có tồn tại và hợp lệ hay không
+    if (!data.title) {
+        return res.status(400).json({error: 'Request complete confession title.'});
+    }
+
+    if (!data.date) {
+        data.date = new Date()
+    }
+
+    try {
+        const updateRecord = await Confession.updateOne(
+            { userId: userId },
+            { $push: { data: data } },
+            { upsert: true }
+        ).exec();
+
+        res.status(201).json(updateRecord);
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({error: 'An error occurred while saving the record.'});
+    }
+}
 //
 // // DELETE budget-tracker/delete
 // const handleDeleteItem = async (req, res) => {
@@ -115,4 +119,4 @@ const handleCreatePasswordConfession = async (req, res) => {
 // };
 
 
-module.exports = {handleGetItems, handleCreatePasswordConfession}
+module.exports = {handleGetItems, handleCreatePasswordConfession, handleAddItem}
